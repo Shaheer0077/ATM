@@ -1,0 +1,10 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="ATM_ASM/ATM_ASM.vcxproj" Id="ccbfa5a1-ff3d-4f8d-b8af-8df26d063f64" />
+  <Project Path="ATM_Bridge/ATM_Bridge.vcxproj" />
+  <Project Path="ATM_UI/ATM_UI.csproj" />
+</Solution>
