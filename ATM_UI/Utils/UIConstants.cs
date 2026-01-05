@@ -3,7 +3,7 @@ namespace ATM_UI.Utils
     public static class UIConstants
     {
         // Color Scheme - Modern Blue Theme
-        public static readonly Color PrimaryColor = Color.FromArgb(31, 140, 185);        // Modern Blue (#1F8CB9)
+        public static readonly Color PrimaryColor = Color.FromArgb(22, 109, 150);       // Modern Blue (#1F8CB9)
         public static readonly Color PrimaryDarkColor = Color.FromArgb(22, 109, 150);   // Darker Blue (#166D96)
         public static readonly Color AccentColor = Color.FromArgb(52, 211, 153);        // Green Accent (#34D399)
         public static readonly Color BackgroundColor = Color.FromArgb(240, 244, 249);   // Light Gray Background (#F0F4F9)

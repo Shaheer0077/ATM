@@ -1,108 +1,155 @@
+using System;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Windows.Forms;
+
 namespace ATM_UI.Forms
 {
-    public partial class TransactionHistoryForm : Form
+    public class TransactionHistoryForm : Form
     {
         private Services.ATMService atmService;
+
         private Panel pnlHeader;
+        private RoundedPanel pnlCard;
+
+        private Label lblTitle;
+        private ListView lvHistory;
+        private Button btnOK;
 
         public TransactionHistoryForm(Services.ATMService service)
         {
-            InitializeComponent();
             atmService = service;
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.BackColor = Utils.UIConstants.BackgroundColor;
+            BuildUI();
         }
 
-        private void TransactionHistoryForm_Load(object sender, EventArgs e)
+        private void BuildUI()
         {
-            this.ClientSize = new Size(Utils.UIConstants.HistoryFormWidth, Utils.UIConstants.HistoryFormHeight);
-            this.Text = "ATM - Transaction History";
+            // ================= FORM =================
+            Text = "ATM - Transaction History";
+            ClientSize = new Size(920, 520);
+            StartPosition = FormStartPosition.CenterScreen;
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            MaximizeBox = false;
+            DoubleBuffered = true;
 
-            // Header
-            pnlHeader.BackColor = Utils.UIConstants.PrimaryColor;
-            pnlHeader.Bounds = new Rectangle(0, 0, this.ClientSize.Width, 70);
+            // ================= HEADER =================
+            pnlHeader = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 90,
+                BackColor = Color.FromArgb(39, 119, 225)
+            };
 
-            lblTitle.Text = "TRANSACTION HISTORY";
-            lblTitle.Font = Utils.UIConstants.HeadingFont;
-            lblTitle.ForeColor = Color.White;
-            lblTitle.TextAlign = ContentAlignment.MiddleCenter;
-            lblTitle.Bounds = new Rectangle(0, 0, pnlHeader.Width, pnlHeader.Height);
+            lblTitle = new Label
+            {
+                Text = "TRANSACTION HISTORY",
+                Dock = DockStyle.Fill,
+                Font = new Font("Segoe UI Semibold", 24),
+                ForeColor = Color.White,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+
             pnlHeader.Controls.Add(lblTitle);
+            Controls.Add(pnlHeader);
 
-            this.Controls.Add(pnlHeader);
+            // ================= CARD =================
+            pnlCard = new RoundedPanel
+            {
+                Size = new Size(820, 350),
+                Location = new Point(50, 120),
+                BackColor = Color.White,
+                Radius = 22
+            };
+            Controls.Add(pnlCard);
 
-            int margin = Utils.UIConstants.StandardMargin;
-            int contentY = pnlHeader.Bottom + margin;
+            // ================= LIST VIEW =================
+            lvHistory = new ListView
+            {
+                View = View.Details,
+                FullRowSelect = true,
+                BorderStyle = BorderStyle.None,
+                Font = new Font("Segoe UI", 11),
+                Dock = DockStyle.Top,
+                Height = 260,
+                GridLines = true,
+                HeaderStyle = ColumnHeaderStyle.Nonclickable
+            };
 
-            lstTransactions.Font = new Font("Courier New", 10);
-            lstTransactions.BackColor = Color.White;
-            lstTransactions.ForeColor = Utils.UIConstants.TextPrimaryColor;
-            lstTransactions.BorderStyle = BorderStyle.FixedSingle;
-            lstTransactions.Items.Clear();
+            lvHistory.Columns.Add("Date & Time", 240);
+            lvHistory.Columns.Add("Type", 160);
+            lvHistory.Columns.Add("Amount", 160);
+            lvHistory.Columns.Add("Balance", 180);
+
+            pnlCard.Controls.Add(lvHistory);
+
+            PopulateHistory();
+
+            // ================= OK BUTTON =================
+            btnOK = new Button
+            {
+                Text = "OK",
+                Width = 160,
+                Height = 44,
+                Top = 285,
+                Left = (pnlCard.Width - 160) / 2,
+                BackColor = Color.FromArgb(39, 119, 225),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI Semibold", 11),
+                Cursor = Cursors.Hand
+            };
+            btnOK.FlatAppearance.BorderSize = 0;
+            btnOK.Click += (s, e) => Close();
+
+            pnlCard.Controls.Add(btnOK);
+        }
+
+        // ================= DATA =================
+        private void PopulateHistory()
+        {
+            lvHistory.Items.Clear();
 
             var transactions = atmService.GetTransactionHistory();
+
             if (transactions.Count == 0)
             {
-                lstTransactions.Items.Add("No transactions found");
-            }
-            else
-            {
-                foreach (var transaction in transactions)
+                var empty = new ListViewItem("No transactions found")
                 {
-                    lstTransactions.Items.Add(transaction.ToString());
-                }
+                    ForeColor = Color.Gray
+                };
+                lvHistory.Items.Add(empty);
+                return;
             }
 
-            lstTransactions.Bounds = new Rectangle(margin, contentY, this.ClientSize.Width - 2 * margin, this.ClientSize.Height - contentY - Utils.UIConstants.ButtonHeight - 50);
-            this.Controls.Add(lstTransactions);
+            foreach (var t in transactions)
+            {
+                // Expected format:
+                // Date | Type | Amount | Balance
 
-            btnOK.Text = "OK";
-            btnOK.Font = Utils.UIConstants.NormalFont;
-            btnOK.BackColor = Utils.UIConstants.PrimaryColor;
-            btnOK.ForeColor = Color.White;
-            btnOK.FlatStyle = FlatStyle.Flat;
-            btnOK.FlatAppearance.BorderSize = 0;
-            btnOK.Bounds = new Rectangle((this.ClientSize.Width - Utils.UIConstants.StandardButtonWidth) / 2, lstTransactions.Bottom + margin, Utils.UIConstants.StandardButtonWidth, Utils.UIConstants.ButtonHeight);
-            btnOK.Cursor = Cursors.Hand;
-            this.Controls.Add(btnOK);
+                string raw = t.ToString();
+                string[] parts = raw.Split('|');
+
+                if (parts.Length < 4) continue;
+
+                ListViewItem item = new ListViewItem(parts[0].Trim());
+                item.SubItems.Add(parts[1].Trim());
+                item.SubItems.Add(parts[2].Trim());
+                item.SubItems.Add(parts[3].Replace("Balance:", "").Trim());
+
+                lvHistory.Items.Add(item);
+            }
         }
 
-        private void BtnOK_Click(object sender, EventArgs e)
+        // ================= BACKGROUND =================
+        protected override void OnPaint(PaintEventArgs e)
         {
-            this.Close();
-        }
+            using LinearGradientBrush brush = new LinearGradientBrush(
+                ClientRectangle,
+                Color.FromArgb(248, 250, 252),
+                Color.FromArgb(236, 240, 245),
+                90f);
 
-        private Label lblTitle;
-        private ListBox lstTransactions;
-        private Button btnOK;
-
-        private void InitializeComponent()
-        {
-            pnlHeader = new Panel();
-            lblTitle = new Label();
-            lstTransactions = new ListBox();
-            btnOK = new Button();
-
-            SuspendLayout();
-
-            this.AutoScaleDimensions = new SizeF(7F, 15F);
-            this.AutoScaleMode = AutoScaleMode.Font;
-            this.ClientSize = new Size(Utils.UIConstants.HistoryFormWidth, Utils.UIConstants.HistoryFormHeight);
-            this.Name = "TransactionHistoryForm";
-            this.Text = "ATM - Transaction History";
-            this.Load += TransactionHistoryForm_Load;
-
-            this.Controls.Add(pnlHeader);
-            this.Controls.Add(lblTitle);
-            this.Controls.Add(lstTransactions);
-            this.Controls.Add(btnOK);
-
-            btnOK.Click += BtnOK_Click;
-
-            ResumeLayout(false);
-            PerformLayout();
+            e.Graphics.FillRectangle(brush, ClientRectangle);
         }
     }
 }

@@ -1,167 +1,288 @@
+﻿using System;
+using System.Drawing;
+using System.Windows.Forms;
+
 namespace ATM_UI.Forms
 {
-    public partial class WithdrawForm : Form
+    public class WithdrawForm : Form
     {
         private Services.ATMService atmService;
+
         private Panel pnlHeader;
+        private Panel pnlWithdraw;
+        private Panel pnlKeypad;
+
+        private Label lblTitle;
+        private Label lblBalance;
+        private Label lblMessage;
+
+        private TextBox txtAmount;
+
+        private Button btnWithdraw;
+        private Button btnCancel;
 
         public WithdrawForm(Services.ATMService service)
         {
-            InitializeComponent();
             atmService = service;
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.BackColor = Utils.UIConstants.BackgroundColor;
+            BuildUI();
         }
 
-        private void WithdrawForm_Load(object sender, EventArgs e)
+        private void BuildUI()
         {
-            this.ClientSize = new Size(Utils.UIConstants.OperationFormWidth, Utils.UIConstants.OperationFormHeight);
-            this.Text = "ATM - Withdraw Money";
+            // ================= FORM =================
+            Text = "ATM Withdraw";
+            ClientSize = new Size(920, 520);
+            StartPosition = FormStartPosition.CenterScreen;
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            MaximizeBox = false;
+            DoubleBuffered = true;
 
-            // Header
-            pnlHeader.BackColor = Utils.UIConstants.PrimaryColor;
-            pnlHeader.Bounds = new Rectangle(0, 0, this.ClientSize.Width, 70);
+            // ================= BACKGROUND IMAGE =================
+            PictureBox bg = new PictureBox
+            {
+                Dock = DockStyle.Fill,
+                Image = Properties.Resources.BG_Image,
+                SizeMode = PictureBoxSizeMode.StretchImage
+            };
+            Controls.Add(bg);
+            bg.SendToBack();
 
-            lblTitle.Text = "WITHDRAW MONEY";
-            lblTitle.Font = Utils.UIConstants.HeadingFont;
-            lblTitle.ForeColor = Color.White;
-            lblTitle.TextAlign = ContentAlignment.MiddleCenter;
-            lblTitle.Bounds = new Rectangle(0, 0, pnlHeader.Width, pnlHeader.Height);
+            // ================= HEADER =================
+            pnlHeader = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 90,
+                BackColor = Color.FromArgb(0, 90, 160)
+            };
+
+            lblTitle = new Label
+            {
+                Text = "WITHDRAW CASH",
+                Dock = DockStyle.Fill,
+                Font = new Font("Segoe UI", 24, FontStyle.Bold),
+                ForeColor = Color.White,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+
             pnlHeader.Controls.Add(lblTitle);
+            Controls.Add(pnlHeader);
+            pnlHeader.BringToFront();
 
-            this.Controls.Add(pnlHeader);
+            // ================= MAIN CONTAINER (NO BG) =================
+            pnlWithdraw = new Panel
+            {
+                Size = new Size(370, 340),
+                Location = new Point(60, 120),
+                BackColor = Color.Transparent
+            };
+            bg.Controls.Add(pnlWithdraw);
 
-            int margin = Utils.UIConstants.StandardMargin;
-            int contentY = pnlHeader.Bottom + margin;
+            // ================= BALANCE =================
+            lblBalance = new Label
+            {
+                Text = $"Current Balance: ${atmService.CheckBalance():F2}",
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Color.White,
+                Top = 20,
+                Left = 25,
+                Width = 320,
+                TextAlign = ContentAlignment.MiddleCenter,
+                BackColor = Color.FromArgb(52, 152, 219)
+            };
+            pnlWithdraw.Controls.Add(lblBalance);
 
-            lblCurrentBalance.Text = $"Current Balance: ${atmService.CheckBalance():F2}";
-            lblCurrentBalance.Font = Utils.UIConstants.LabelFont;
-            lblCurrentBalance.ForeColor = Utils.UIConstants.PrimaryColor;
-            lblCurrentBalance.AutoSize = false;
-            lblCurrentBalance.Bounds = new Rectangle(margin, contentY, this.ClientSize.Width - 2 * margin, 25);
-            this.Controls.Add(lblCurrentBalance);
+            // ================= AMOUNT FIELD =================
+            Panel amountBg = CreateFieldBackground(70);
+            pnlWithdraw.Controls.Add(amountBg);
 
-            contentY += 35;
+            txtAmount = CreateInnerTextBox();
+            txtAmount.Font = new Font("Segoe UI", 14, FontStyle.Bold);
+            txtAmount.TextAlign = HorizontalAlignment.Center;
+            amountBg.Controls.Add(txtAmount);
 
-            lblAmount.Text = "Withdrawal Amount:";
-            lblAmount.Font = Utils.UIConstants.LabelFont;
-            lblAmount.ForeColor = Utils.UIConstants.TextPrimaryColor;
-            lblAmount.AutoSize = true;
-            lblAmount.Bounds = new Rectangle(margin, contentY, 150, Utils.UIConstants.LabelHeight);
-            this.Controls.Add(lblAmount);
+            // ================= PRESET BUTTONS =================
+            FlowLayoutPanel presetPanel = new FlowLayoutPanel
+            {
+                Top = 130,
+                Left = 20,
+                Width = 330,
+                Height = 90
+            };
 
-            txtAmount.Text = "";
-            txtAmount.Font = Utils.UIConstants.NormalFont;
-            txtAmount.BackColor = Color.White;
-            txtAmount.BorderStyle = BorderStyle.FixedSingle;
-            txtAmount.Bounds = new Rectangle(margin, lblAmount.Bottom + 5, this.ClientSize.Width - 2 * margin, Utils.UIConstants.InputHeight);
-            this.Controls.Add(txtAmount);
+            AddPreset(presetPanel, "500");
+            AddPreset(presetPanel, "1000");
+            AddPreset(presetPanel, "5000");
+            AddPreset(presetPanel, "10000");
+            AddPreset(presetPanel, "20000");
+            AddPreset(presetPanel, "50000");
 
-            int buttonY = txtAmount.Bottom + Utils.UIConstants.StandardMargin;
-            int totalButtonWidth = 2 * Utils.UIConstants.StandardButtonWidth + Utils.UIConstants.StandardMargin;
-            int startX = (this.ClientSize.Width - totalButtonWidth) / 2;
+            pnlWithdraw.Controls.Add(presetPanel);
 
-            btnWithdraw.Text = "Withdraw";
-            btnWithdraw.Font = Utils.UIConstants.NormalFont;
-            btnWithdraw.BackColor = Utils.UIConstants.PrimaryColor;
-            btnWithdraw.ForeColor = Color.White;
-            btnWithdraw.FlatStyle = FlatStyle.Flat;
-            btnWithdraw.FlatAppearance.BorderSize = 0;
-            btnWithdraw.Bounds = new Rectangle(startX, buttonY, Utils.UIConstants.StandardButtonWidth, Utils.UIConstants.ButtonHeight);
-            btnWithdraw.Cursor = Cursors.Hand;
-            this.Controls.Add(btnWithdraw);
+            // ================= MESSAGE =================
+            lblMessage = new Label
+            {
+                Top = 230,
+                Left = 25,
+                Width = 320,
+                Height = 22,
+                TextAlign = ContentAlignment.MiddleCenter,
+                ForeColor = Color.White
+            };
+            pnlWithdraw.Controls.Add(lblMessage);
 
-            btnCancel.Text = "Cancel";
-            btnCancel.Font = Utils.UIConstants.NormalFont;
-            btnCancel.BackColor = Utils.UIConstants.ErrorColor;
-            btnCancel.ForeColor = Color.White;
-            btnCancel.FlatStyle = FlatStyle.Flat;
-            btnCancel.FlatAppearance.BorderSize = 0;
-            btnCancel.Bounds = new Rectangle(btnWithdraw.Right + Utils.UIConstants.StandardMargin, buttonY, Utils.UIConstants.StandardButtonWidth, Utils.UIConstants.ButtonHeight);
-            btnCancel.Cursor = Cursors.Hand;
-            this.Controls.Add(btnCancel);
+            // ================= BUTTONS =================
+            btnWithdraw = CreateButton("WITHDRAW", 260, Color.FromArgb(46, 204, 113));
+            btnCancel = CreateButton("CANCEL", 260, Color.FromArgb(231, 76, 60));
+            btnCancel.Left = 200;
 
-            lblMessage.Text = "";
-            lblMessage.Font = Utils.UIConstants.NormalFont;
-            lblMessage.AutoSize = false;
-            lblMessage.TextAlign = ContentAlignment.TopCenter;
-            lblMessage.Bounds = new Rectangle(margin, btnCancel.Bottom + Utils.UIConstants.StandardMargin, this.ClientSize.Width - 2 * margin, 40);
-            this.Controls.Add(lblMessage);
+            btnWithdraw.Click += BtnWithdraw_Click;
+            btnCancel.Click += (s, e) => Close();
+
+            pnlWithdraw.Controls.Add(btnWithdraw);
+            pnlWithdraw.Controls.Add(btnCancel);
+
+            // ================= KEYPAD =================
+            pnlKeypad = BuildKeypad();
+            pnlKeypad.Location = new Point(480, 120);
+            bg.Controls.Add(pnlKeypad);
         }
 
+        // ================= PRESET BUTTON =================
+        private void AddPreset(FlowLayoutPanel panel, string amount)
+        {
+            Button btn = new Button
+            {
+                Text = amount,
+                Width = 95,
+                Height = 36,
+                BackColor = Color.FromArgb(52, 152, 219),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+
+            btn.FlatAppearance.BorderSize = 2;
+            btn.FlatAppearance.BorderColor = Color.White;
+            btn.Click += (s, e) => txtAmount.Text = amount;
+
+            panel.Controls.Add(btn);
+        }
+
+        // ================= KEYPAD =================
+        private Panel BuildKeypad()
+        {
+            Panel panel = new Panel
+            {
+                Size = new Size(320, 340),
+                BackColor = Color.Transparent
+            };
+
+            string[] keys =
+            {
+                "1","2","3",
+                "4","5","6",
+                "7","8","9",
+                "CLR","0","←"
+            };
+
+            int index = 0;
+            for (int r = 0; r < 4; r++)
+            {
+                for (int c = 0; c < 3; c++)
+                {
+                    Button btn = new Button
+                    {
+                        Text = keys[index++],
+                        Size = new Size(85, 60),
+                        Location = new Point(25 + c * 95, 25 + r * 75),
+                        Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                        BackColor = Color.FromArgb(52, 152, 219),
+                        ForeColor = Color.White,
+                        FlatStyle = FlatStyle.Flat,
+                        Cursor = Cursors.Hand
+                    };
+
+                    btn.FlatAppearance.BorderSize = 2;
+                    btn.FlatAppearance.BorderColor = Color.White;
+                    btn.Click += Keypad_Click;
+                    panel.Controls.Add(btn);
+                }
+            }
+            return panel;
+        }
+
+        private void Keypad_Click(object sender, EventArgs e)
+        {
+            Button btn = sender as Button;
+
+            if (btn.Text == "CLR")
+                txtAmount.Text = "";
+            else if (btn.Text == "←" && txtAmount.Text.Length > 0)
+                txtAmount.Text = txtAmount.Text[..^1];
+            else
+                txtAmount.Text += btn.Text;
+        }
+
+        // ================= LOGIC =================
         private void BtnWithdraw_Click(object sender, EventArgs e)
         {
             if (!decimal.TryParse(txtAmount.Text, out decimal amount))
             {
-                lblMessage.Text = "Please enter a valid amount";
-                lblMessage.ForeColor = Utils.UIConstants.ErrorColor;
+                lblMessage.Text = "Enter a valid amount";
+                lblMessage.ForeColor = Color.Red;
                 return;
             }
 
             var (success, message) = atmService.Withdraw(amount);
-            if (success)
+
+            lblMessage.Text = message;
+            lblMessage.ForeColor = success ? Color.LightGreen : Color.Red;
+            lblBalance.Text = $"Current Balance: ${atmService.CheckBalance():F2}";
+
+            if (success) txtAmount.Clear();
+        }
+
+        // ================= HELPERS =================
+        private Panel CreateFieldBackground(int top) =>
+            new Panel
             {
-                lblMessage.Text = message;
-                lblMessage.ForeColor = Utils.UIConstants.SuccessColor;
-                lblCurrentBalance.Text = $"Current Balance: ${atmService.CheckBalance():F2}";
-                txtAmount.Text = "";
-            }
-            else
+                Left = 25,
+                Top = top,
+                Width = 320,
+                Height = 40,
+                BackColor = Color.FromArgb(245, 247, 250)
+            };
+
+        private TextBox CreateInnerTextBox() =>
+            new TextBox
             {
-                lblMessage.Text = message;
-                lblMessage.ForeColor = Utils.UIConstants.ErrorColor;
-            }
-        }
+                BorderStyle = BorderStyle.None,
+                Font = new Font("Segoe UI", 12),
+                Left = 10,
+                Top = 10,
+                Width = 300,
+                BackColor = Color.FromArgb(245, 247, 250)
+            };
 
-        private void BtnCancel_Click(object sender, EventArgs e)
-        {
-            this.Close();
-        }
-
-        private Label lblTitle;
-        private Label lblCurrentBalance;
-        private Label lblAmount;
-        private TextBox txtAmount;
-        private Button btnWithdraw;
-        private Button btnCancel;
-        private Label lblMessage;
-
-        private void InitializeComponent()
-        {
-            pnlHeader = new Panel();
-            lblTitle = new Label();
-            lblCurrentBalance = new Label();
-            lblAmount = new Label();
-            txtAmount = new TextBox();
-            btnWithdraw = new Button();
-            btnCancel = new Button();
-            lblMessage = new Label();
-
-            SuspendLayout();
-
-            this.AutoScaleDimensions = new SizeF(7F, 15F);
-            this.AutoScaleMode = AutoScaleMode.Font;
-            this.ClientSize = new Size(Utils.UIConstants.OperationFormWidth, Utils.UIConstants.OperationFormHeight);
-            this.Name = "WithdrawForm";
-            this.Text = "ATM - Withdraw";
-            this.Load += WithdrawForm_Load;
-
-            this.Controls.Add(pnlHeader);
-            this.Controls.Add(lblTitle);
-            this.Controls.Add(lblCurrentBalance);
-            this.Controls.Add(lblAmount);
-            this.Controls.Add(txtAmount);
-            this.Controls.Add(btnWithdraw);
-            this.Controls.Add(btnCancel);
-            this.Controls.Add(lblMessage);
-
-            btnWithdraw.Click += BtnWithdraw_Click;
-            btnCancel.Click += BtnCancel_Click;
-
-            ResumeLayout(false);
-            PerformLayout();
-        }
+        private Button CreateButton(string text, int top, Color color) =>
+            new Button
+            {
+                Text = text,
+                Top = top,
+                Left = 25,
+                Width = 150,
+                Height = 42,
+                BackColor = color,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                FlatAppearance =
+                {
+                    BorderSize = 2,
+                    BorderColor = Color.White
+                }
+            };
     }
 }

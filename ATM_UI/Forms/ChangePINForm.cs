@@ -1,231 +1,294 @@
+﻿using System;
+using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
+
 namespace ATM_UI.Forms
 {
-    public partial class ChangePINForm : Form
+    public class ChangePINForm : Form
     {
         private Services.ATMService atmService;
+
         private Panel pnlHeader;
+        private Panel pnlChange;
+        private Panel pnlKeypad;
 
-        public ChangePINForm(Services.ATMService service)
-        {
-            InitializeComponent();
-            atmService = service;
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.BackColor = Utils.UIConstants.BackgroundColor;
-        }
-
-        private void ChangePINForm_Load(object sender, EventArgs e)
-        {
-            this.ClientSize = new Size(Utils.UIConstants.ChangePINFormWidth, Utils.UIConstants.ChangePINFormHeight);
-            this.Text = "ATM - Change PIN";
-
-            // Header
-            pnlHeader.BackColor = Utils.UIConstants.PrimaryColor;
-            pnlHeader.Bounds = new Rectangle(0, 0, this.ClientSize.Width, 70);
-
-            lblTitle.Text = "CHANGE YOUR PIN";
-            lblTitle.Font = Utils.UIConstants.HeadingFont;
-            lblTitle.ForeColor = Color.White;
-            lblTitle.TextAlign = ContentAlignment.MiddleCenter;
-            lblTitle.Bounds = new Rectangle(0, 0, pnlHeader.Width, pnlHeader.Height);
-            pnlHeader.Controls.Add(lblTitle);
-
-            this.Controls.Add(pnlHeader);
-
-            int margin = Utils.UIConstants.StandardMargin;
-            int contentY = pnlHeader.Bottom + margin;
-
-            lblOldPIN.Text = "Current PIN:";
-            lblOldPIN.Font = Utils.UIConstants.LabelFont;
-            lblOldPIN.ForeColor = Utils.UIConstants.TextPrimaryColor;
-            lblOldPIN.AutoSize = true;
-            lblOldPIN.Bounds = new Rectangle(margin, contentY, 150, Utils.UIConstants.LabelHeight);
-            this.Controls.Add(lblOldPIN);
-
-            txtOldPIN.Text = "";
-            txtOldPIN.Font = Utils.UIConstants.NormalFont;
-            txtOldPIN.BackColor = Color.White;
-            txtOldPIN.PasswordChar = '*';
-            txtOldPIN.BorderStyle = BorderStyle.FixedSingle;
-            txtOldPIN.Bounds = new Rectangle(margin, lblOldPIN.Bottom + 5, this.ClientSize.Width - 2 * margin, Utils.UIConstants.InputHeight);
-            this.Controls.Add(txtOldPIN);
-
-            contentY = txtOldPIN.Bottom + Utils.UIConstants.StandardMargin;
-
-            lblNewPIN.Text = "New PIN (4 digits):";
-            lblNewPIN.Font = Utils.UIConstants.LabelFont;
-            lblNewPIN.ForeColor = Utils.UIConstants.TextPrimaryColor;
-            lblNewPIN.AutoSize = true;
-            lblNewPIN.Bounds = new Rectangle(margin, contentY, 150, Utils.UIConstants.LabelHeight);
-            this.Controls.Add(lblNewPIN);
-
-            txtNewPIN.Text = "";
-            txtNewPIN.Font = Utils.UIConstants.NormalFont;
-            txtNewPIN.BackColor = Color.White;
-            txtNewPIN.PasswordChar = '*';
-            txtNewPIN.BorderStyle = BorderStyle.FixedSingle;
-            txtNewPIN.Bounds = new Rectangle(margin, lblNewPIN.Bottom + 5, this.ClientSize.Width - 2 * margin, Utils.UIConstants.InputHeight);
-            this.Controls.Add(txtNewPIN);
-
-            contentY = txtNewPIN.Bottom + Utils.UIConstants.StandardMargin;
-
-            lblConfirmPIN.Text = "Confirm New PIN:";
-            lblConfirmPIN.Font = Utils.UIConstants.LabelFont;
-            lblConfirmPIN.ForeColor = Utils.UIConstants.TextPrimaryColor;
-            lblConfirmPIN.AutoSize = true;
-            lblConfirmPIN.Bounds = new Rectangle(margin, contentY, 150, Utils.UIConstants.LabelHeight);
-            this.Controls.Add(lblConfirmPIN);
-
-            txtConfirmPIN.Text = "";
-            txtConfirmPIN.Font = Utils.UIConstants.NormalFont;
-            txtConfirmPIN.BackColor = Color.White;
-            txtConfirmPIN.PasswordChar = '*';
-            txtConfirmPIN.BorderStyle = BorderStyle.FixedSingle;
-            txtConfirmPIN.Bounds = new Rectangle(margin, lblConfirmPIN.Bottom + 5, this.ClientSize.Width - 2 * margin, Utils.UIConstants.InputHeight);
-            this.Controls.Add(txtConfirmPIN);
-
-            int buttonY = txtConfirmPIN.Bottom + Utils.UIConstants.StandardMargin + 10;
-            int totalButtonWidth = 2 * Utils.UIConstants.StandardButtonWidth + Utils.UIConstants.StandardMargin;
-            int startX = (this.ClientSize.Width - totalButtonWidth) / 2;
-
-            btnChange.Text = "Change PIN";
-            btnChange.Font = Utils.UIConstants.NormalFont;
-            btnChange.BackColor = Utils.UIConstants.PrimaryColor;
-            btnChange.ForeColor = Color.White;
-            btnChange.FlatStyle = FlatStyle.Flat;
-            btnChange.FlatAppearance.BorderSize = 0;
-            btnChange.Bounds = new Rectangle(startX, buttonY, Utils.UIConstants.StandardButtonWidth, Utils.UIConstants.ButtonHeight);
-            btnChange.Cursor = Cursors.Hand;
-            this.Controls.Add(btnChange);
-
-            btnCancel.Text = "Cancel";
-            btnCancel.Font = Utils.UIConstants.NormalFont;
-            btnCancel.BackColor = Utils.UIConstants.ErrorColor;
-            btnCancel.ForeColor = Color.White;
-            btnCancel.FlatStyle = FlatStyle.Flat;
-            btnCancel.FlatAppearance.BorderSize = 0;
-            btnCancel.Bounds = new Rectangle(btnChange.Right + Utils.UIConstants.StandardMargin, buttonY, Utils.UIConstants.StandardButtonWidth, Utils.UIConstants.ButtonHeight);
-            btnCancel.Cursor = Cursors.Hand;
-            this.Controls.Add(btnCancel);
-
-            lblMessage.Text = "";
-            lblMessage.Font = Utils.UIConstants.NormalFont;
-            lblMessage.AutoSize = false;
-            lblMessage.TextAlign = ContentAlignment.TopCenter;
-            lblMessage.Bounds = new Rectangle(margin, btnChange.Bottom + Utils.UIConstants.StandardMargin, this.ClientSize.Width - 2 * margin, 40);
-            this.Controls.Add(lblMessage);
-        }
-
-        private void BtnChange_Click(object sender, EventArgs e)
-        {
-            string oldPIN = txtOldPIN.Text;
-            string newPIN = txtNewPIN.Text;
-            string confirmPIN = txtConfirmPIN.Text;
-
-            if (string.IsNullOrWhiteSpace(oldPIN))
-            {
-                lblMessage.Text = "Please enter your current PIN";
-                lblMessage.ForeColor = Utils.UIConstants.ErrorColor;
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(newPIN) || string.IsNullOrWhiteSpace(confirmPIN))
-            {
-                lblMessage.Text = "Please enter and confirm your new PIN";
-                lblMessage.ForeColor = Utils.UIConstants.ErrorColor;
-                return;
-            }
-
-            if (newPIN != confirmPIN)
-            {
-                lblMessage.Text = "New PIN and confirmation do not match";
-                lblMessage.ForeColor = Utils.UIConstants.ErrorColor;
-                txtNewPIN.Text = "";
-                txtConfirmPIN.Text = "";
-                return;
-            }
-
-            if (newPIN.Length != 4 || !newPIN.All(char.IsDigit))
-            {
-                lblMessage.Text = "New PIN must be exactly 4 digits";
-                lblMessage.ForeColor = Utils.UIConstants.ErrorColor;
-                return;
-            }
-
-            var (success, message) = atmService.ChangePIN(oldPIN, newPIN);
-            if (success)
-            {
-                lblMessage.Text = message;
-                lblMessage.ForeColor = Utils.UIConstants.SuccessColor;
-                txtOldPIN.Text = "";
-                txtNewPIN.Text = "";
-                txtConfirmPIN.Text = "";
-            }
-            else
-            {
-                lblMessage.Text = message;
-                lblMessage.ForeColor = Utils.UIConstants.ErrorColor;
-                txtOldPIN.Text = "";
-            }
-        }
-
-        private void BtnCancel_Click(object sender, EventArgs e)
-        {
-            this.Close();
-        }
-
-        private Label lblTitle;
-        private Label lblOldPIN;
-        private Label lblNewPIN;
-        private Label lblConfirmPIN;
         private TextBox txtOldPIN;
         private TextBox txtNewPIN;
         private TextBox txtConfirmPIN;
-        private Button btnChange;
-        private Button btnCancel;
+        private TextBox activeTextBox;
+
         private Label lblMessage;
 
-        private void InitializeComponent()
+        private Button btnChange;
+        private Button btnCancel;
+
+        public ChangePINForm(Services.ATMService service)
         {
-            pnlHeader = new Panel();
-            lblTitle = new Label();
-            lblOldPIN = new Label();
-            lblNewPIN = new Label();
-            lblConfirmPIN = new Label();
-            txtOldPIN = new TextBox();
-            txtNewPIN = new TextBox();
-            txtConfirmPIN = new TextBox();
-            btnChange = new Button();
-            btnCancel = new Button();
-            lblMessage = new Label();
+            atmService = service;
+            InitializeComponent();
+            BuildUI();
+        }
 
-            SuspendLayout();
+        private void BuildUI()
+        {
+            // ================= FORM =================
+            Text = "ATM - Change PIN";
+            ClientSize = new Size(920, 520);
+            StartPosition = FormStartPosition.CenterScreen;
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            MaximizeBox = false;
+            DoubleBuffered = true;
 
-            this.AutoScaleDimensions = new SizeF(7F, 15F);
-            this.AutoScaleMode = AutoScaleMode.Font;
-            this.ClientSize = new Size(Utils.UIConstants.ChangePINFormWidth, Utils.UIConstants.ChangePINFormHeight);
-            this.Name = "ChangePINForm";
-            this.Text = "ATM - Change PIN";
-            this.Load += ChangePINForm_Load;
+            // ================= BACKGROUND =================
+            PictureBox bg = new PictureBox
+            {
+                Dock = DockStyle.Fill,
+                Image = Properties.Resources.BG_Image,
+                SizeMode = PictureBoxSizeMode.StretchImage
+            };
+            Controls.Add(bg);
 
-            this.Controls.Add(pnlHeader);
-            this.Controls.Add(lblTitle);
-            this.Controls.Add(lblOldPIN);
-            this.Controls.Add(lblNewPIN);
-            this.Controls.Add(lblConfirmPIN);
-            this.Controls.Add(txtOldPIN);
-            this.Controls.Add(txtNewPIN);
-            this.Controls.Add(txtConfirmPIN);
-            this.Controls.Add(btnChange);
-            this.Controls.Add(btnCancel);
-            this.Controls.Add(lblMessage);
+            // ================= HEADER =================
+            pnlHeader = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 90,
+                BackColor = Color.FromArgb(0, 90, 160)
+            };
+
+            Label lblTitle = new Label
+            {
+                Text = "CHANGE PIN",
+                Dock = DockStyle.Fill,
+                Font = new Font("Segoe UI Semibold", 24),
+                ForeColor = Color.White,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+
+            pnlHeader.Controls.Add(lblTitle);
+            Controls.Add(pnlHeader);
+            pnlHeader.BringToFront();
+
+            // ================= MAIN CONTAINER =================
+            pnlChange = new Panel
+            {
+                Size = new Size(360, 360),
+                Location = new Point(60, 120),
+                BackColor = Color.Transparent
+            };
+            bg.Controls.Add(pnlChange);
+
+            // ================= OLD PIN =================
+            pnlChange.Controls.Add(CreateLabel("CURRENT PIN :", 20));
+            Panel oldBg = CreateFieldBackground(50);
+            pnlChange.Controls.Add(oldBg);
+
+            txtOldPIN = CreateInnerTextBox();
+            txtOldPIN.PasswordChar = '●';
+            txtOldPIN.MaxLength = 4;
+            txtOldPIN.Enter += (s, e) => activeTextBox = txtOldPIN;
+            oldBg.Controls.Add(txtOldPIN);
+
+            // ================= NEW PIN =================
+            pnlChange.Controls.Add(CreateLabel("NEW PIN :", 100));
+            Panel newBg = CreateFieldBackground(130);
+            pnlChange.Controls.Add(newBg);
+
+            txtNewPIN = CreateInnerTextBox();
+            txtNewPIN.PasswordChar = '●';
+            txtNewPIN.MaxLength = 4;
+            txtNewPIN.Enter += (s, e) => activeTextBox = txtNewPIN;
+            newBg.Controls.Add(txtNewPIN);
+
+            // ================= CONFIRM PIN =================
+            pnlChange.Controls.Add(CreateLabel("CONFIRM PIN :", 180));
+            Panel confirmBg = CreateFieldBackground(210);
+            pnlChange.Controls.Add(confirmBg);
+
+            txtConfirmPIN = CreateInnerTextBox();
+            txtConfirmPIN.PasswordChar = '●';
+            txtConfirmPIN.MaxLength = 4;
+            txtConfirmPIN.Enter += (s, e) => activeTextBox = txtConfirmPIN;
+            confirmBg.Controls.Add(txtConfirmPIN);
+
+            // ================= MESSAGE =================
+            lblMessage = new Label
+            {
+                Top = 255,
+                Left = 30,
+                Width = 300,
+                Height = 22,
+                TextAlign = ContentAlignment.MiddleCenter,
+                ForeColor = Color.White,
+                BackColor = Color.Transparent,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold)
+            };
+            pnlChange.Controls.Add(lblMessage);
+
+            // ================= BUTTONS =================
+            btnChange = CreateButton("CHANGE", 285);
+            btnCancel = CreateButton("CANCEL", 285);
+            btnCancel.Left = 190;
 
             btnChange.Click += BtnChange_Click;
-            btnCancel.Click += BtnCancel_Click;
+            btnCancel.Click += (s, e) => Close();
 
-            ResumeLayout(false);
-            PerformLayout();
+            pnlChange.Controls.Add(btnChange);
+            pnlChange.Controls.Add(btnCancel);
+
+            // ================= KEYPAD =================
+            pnlKeypad = BuildKeypad();
+            pnlKeypad.Location = new Point(470, 130);
+            bg.Controls.Add(pnlKeypad);
+
+            activeTextBox = txtOldPIN;
         }
+
+        // ================= KEYPAD =================
+        private Panel BuildKeypad()
+        {
+            Panel panel = new Panel
+            {
+                Size = new Size(320, 330),
+                BackColor = Color.Transparent
+            };
+
+            string[] keys =
+            {
+                "1","2","3",
+                "4","5","6",
+                "7","8","9",
+                "CLR","0","←"
+            };
+
+            int index = 0;
+            for (int r = 0; r < 4; r++)
+            {
+                for (int c = 0; c < 3; c++)
+                {
+                    Button btn = new Button
+                    {
+                        Text = keys[index++],
+                        Size = new Size(85, 60),
+                        Location = new Point(25 + c * 95, 25 + r * 75),
+                        Font = new Font("Segoe UI Semibold", 14),
+                        BackColor = Color.FromArgb(52, 152, 219),
+                        ForeColor = Color.White,
+                        FlatStyle = FlatStyle.Flat
+                    };
+
+                    btn.FlatAppearance.BorderSize = 2;
+                    btn.FlatAppearance.BorderColor = Color.White;
+                    btn.Click += Keypad_Click;
+                    panel.Controls.Add(btn);
+                }
+            }
+            return panel;
+        }
+
+        private void Keypad_Click(object sender, EventArgs e)
+        {
+            if (activeTextBox == null) return;
+
+            Button btn = sender as Button;
+
+            if (btn.Text == "CLR")
+                activeTextBox.Clear();
+            else if (btn.Text == "←" && activeTextBox.Text.Length > 0)
+                activeTextBox.Text = activeTextBox.Text[..^1];
+            else if (activeTextBox.Text.Length < 4)
+                activeTextBox.Text += btn.Text;
+        }
+
+        // ================= LOGIC =================
+        private void BtnChange_Click(object sender, EventArgs e)
+        {
+            if (txtNewPIN.Text != txtConfirmPIN.Text)
+            {
+                lblMessage.Text = "PINs do not match";
+                lblMessage.ForeColor = Color.FromArgb(231, 76, 60);
+                return;
+            }
+
+            var (success, message) =
+                atmService.ChangePIN(txtOldPIN.Text, txtNewPIN.Text);
+
+            lblMessage.Text = message;
+            lblMessage.ForeColor = success
+                ? Color.FromArgb(46, 204, 113)
+                : Color.FromArgb(231, 76, 60);
+
+            if (success)
+            {
+                txtOldPIN.Clear();
+                txtNewPIN.Clear();
+                txtConfirmPIN.Clear();
+            }
+        }
+
+        // ================= HELPERS (MATCH LOGIN) =================
+        private Label CreateLabel(string text, int top) =>
+            new Label
+            {
+                Text = text,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                Top = top,
+                Left = 30,
+                Width = 280,
+                BackColor = Color.Transparent
+            };
+
+        private Panel CreateFieldBackground(int top)
+        {
+            Panel panel = new Panel
+            {
+                Left = 25,
+                Top = top,
+                Width = 310,
+                Height = 40,
+                BackColor = Color.FromArgb(245, 247, 250)
+            };
+
+            panel.Paint += (s, e) =>
+            {
+                using Pen pen = new Pen(Color.White, 2);
+                Rectangle rect = panel.ClientRectangle;
+                rect.Width -= 1;
+                rect.Height -= 1;
+                e.Graphics.DrawRectangle(pen, rect);
+            };
+
+            return panel;
+        }
+
+        private TextBox CreateInnerTextBox() =>
+            new TextBox
+            {
+                BorderStyle = BorderStyle.None,
+                Font = new Font("Segoe UI", 12),
+                Left = 10,
+                Top = 10,
+                Width = 290,
+                BackColor = Color.FromArgb(245, 247, 250),
+                TextAlign = HorizontalAlignment.Center
+            };
+
+        private Button CreateButton(string text, int top) =>
+            new Button
+            {
+                Text = text,
+                Top = top,
+                Left = 30,
+                Width = 140,
+                Height = 42,
+                BackColor = Color.FromArgb(52, 152, 219),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI Semibold", 11)
+            };
+
+        private void InitializeComponent() { }
     }
 }

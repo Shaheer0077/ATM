@@ -1,35 +1,40 @@
+﻿using System.Collections.Generic;
+
 namespace ATM_UI.Services
 {
     public class ATMService
     {
-        private Dictionary<string, Models.ATMUser> users;
+        // 🔥 SHARED across entire app
+        private static Dictionary<string, Models.ATMUser> users;
+
         private Models.ATMUser currentUser;
 
         public ATMService()
         {
-            users = new Dictionary<string, Models.ATMUser>();
-            InitializeUsers();
+            if (users == null)
+            {
+                users = new Dictionary<string, Models.ATMUser>();
+                InitializeUsers();
+            }
         }
 
         private void InitializeUsers()
         {
-            users.Add("1001", new Models.ATMUser("1001", "Alishba Ahmed", "1234", 5000m));
-            users.Add("1002", new Models.ATMUser("1002", "Fatimah", "5678", 3500m));
-            users.Add("1003", new Models.ATMUser("1003", "Maryam", "9999", 2000m));
+            users["1001"] = new Models.ATMUser("1001", "Alishba Ahmed", "1234", 5000m);
+            users["1002"] = new Models.ATMUser("1002", "Fatimah", "5678", 3500m);
+            users["1003"] = new Models.ATMUser("1003", "Maryam", "9999", 2000m);
         }
 
+        // ================= AUTH =================
         public (bool success, string message) Authenticate(string accountNumber, string pin)
         {
             if (!users.ContainsKey(accountNumber))
-            {
                 return (false, "Account not found");
-            }
 
             var user = users[accountNumber];
+
             if (user.PIN != pin)
-            {
                 return (false, "Invalid PIN");
-            }
 
             currentUser = user;
             return (true, "Authentication successful");
@@ -45,6 +50,13 @@ namespace ATM_UI.Services
             currentUser = null;
         }
 
+        // ================= BALANCE =================
+        public decimal CheckBalance()
+        {
+            return currentUser?.Balance ?? 0;
+        }
+
+        // ================= WITHDRAW =================
         public (bool success, string message) Withdraw(decimal amount)
         {
             if (currentUser == null)
@@ -57,12 +69,14 @@ namespace ATM_UI.Services
                 return (false, "Insufficient funds");
 
             currentUser.Balance -= amount;
-            var transaction = new Models.ATMTransaction("Withdrawal", amount, currentUser.Balance);
-            currentUser.TransactionHistory.Add(transaction);
+            currentUser.TransactionHistory.Add(
+                new Models.ATMTransaction("Withdrawal", amount, currentUser.Balance)
+            );
 
-            return (true, $"Withdrawal successful. New balance: ${currentUser.Balance:F2}");
+            return (true, "Withdrawal successful");
         }
 
+        // ================= DEPOSIT =================
         public (bool success, string message) Deposit(decimal amount)
         {
             if (currentUser == null)
@@ -72,28 +86,20 @@ namespace ATM_UI.Services
                 return (false, "Amount must be greater than 0");
 
             currentUser.Balance += amount;
-            var transaction = new Models.ATMTransaction("Deposit", amount, currentUser.Balance);
-            currentUser.TransactionHistory.Add(transaction);
+            currentUser.TransactionHistory.Add(
+                new Models.ATMTransaction("Deposit", amount, currentUser.Balance)
+            );
 
-            return (true, $"Deposit successful. New balance: ${currentUser.Balance:F2}");
+            return (true, "Deposit successful");
         }
 
-        public decimal CheckBalance()
-        {
-            if (currentUser == null)
-                return 0;
-
-            return currentUser.Balance;
-        }
-
+        // ================= TRANSACTIONS =================
         public List<Models.ATMTransaction> GetTransactionHistory()
         {
-            if (currentUser == null)
-                return new List<Models.ATMTransaction>();
-
-            return currentUser.TransactionHistory;
+            return currentUser?.TransactionHistory ?? new List<Models.ATMTransaction>();
         }
 
+        // ================= CHANGE PIN =================
         public (bool success, string message) ChangePIN(string oldPIN, string newPIN)
         {
             if (currentUser == null)
@@ -105,7 +111,9 @@ namespace ATM_UI.Services
             if (string.IsNullOrWhiteSpace(newPIN) || newPIN.Length != 4)
                 return (false, "New PIN must be 4 digits");
 
+            // 🔥 updates shared user object
             currentUser.PIN = newPIN;
+
             return (true, "PIN changed successfully");
         }
     }

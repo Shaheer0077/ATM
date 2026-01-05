@@ -1,111 +1,196 @@
+﻿using System;
+using System.Drawing;
+using System.Windows.Forms;
+
 namespace ATM_UI.Forms
 {
     public partial class BalanceForm : Form
     {
         private Services.ATMService atmService;
+
         private Panel pnlHeader;
-
-        public BalanceForm(Services.ATMService service)
-        {
-            InitializeComponent();
-            atmService = service;
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.BackColor = Utils.UIConstants.BackgroundColor;
-        }
-
-        private void BalanceForm_Load(object sender, EventArgs e)
-        {
-            this.ClientSize = new Size(Utils.UIConstants.BalanceFormWidth, Utils.UIConstants.BalanceFormHeight);
-            this.Text = "ATM - Check Balance";
-
-            var user = atmService.GetCurrentUser();
-            decimal balance = atmService.CheckBalance();
-
-            // Header
-            pnlHeader.BackColor = Utils.UIConstants.PrimaryColor;
-            pnlHeader.Bounds = new Rectangle(0, 0, this.ClientSize.Width, 70);
-
-            lblTitle.Text = "YOUR ACCOUNT BALANCE";
-            lblTitle.Font = Utils.UIConstants.HeadingFont;
-            lblTitle.ForeColor = Color.White;
-            lblTitle.TextAlign = ContentAlignment.MiddleCenter;
-            lblTitle.Bounds = new Rectangle(0, 0, pnlHeader.Width, pnlHeader.Height);
-            pnlHeader.Controls.Add(lblTitle);
-
-            this.Controls.Add(pnlHeader);
-
-            int margin = Utils.UIConstants.StandardMargin;
-            int contentY = pnlHeader.Bottom + Utils.UIConstants.LargeMargin;
-
-            lblAccountInfo.Text = $"Account Number: {user.AccountNumber}";
-            lblAccountInfo.Font = Utils.UIConstants.LabelFont;
-            lblAccountInfo.ForeColor = Utils.UIConstants.TextPrimaryColor;
-            lblAccountInfo.AutoSize = false;
-            lblAccountInfo.TextAlign = ContentAlignment.MiddleCenter;
-            lblAccountInfo.Bounds = new Rectangle(margin, contentY, this.ClientSize.Width - 2 * margin, 30);
-            this.Controls.Add(lblAccountInfo);
-
-            contentY += 50;
-
-            lblBalance.Text = $"${balance:F2}";
-            lblBalance.Font = new Font("Segoe UI", 36, FontStyle.Bold);
-            lblBalance.ForeColor = Utils.UIConstants.SuccessColor;
-            lblBalance.TextAlign = ContentAlignment.MiddleCenter;
-            lblBalance.AutoSize = false;
-            lblBalance.Bounds = new Rectangle(margin, contentY, this.ClientSize.Width - 2 * margin, 70);
-            this.Controls.Add(lblBalance);
-
-            int buttonY = lblBalance.Bottom + Utils.UIConstants.StandardMargin;
-            btnOK.Text = "OK";
-            btnOK.Font = Utils.UIConstants.NormalFont;
-            btnOK.BackColor = Utils.UIConstants.PrimaryColor;
-            btnOK.ForeColor = Color.White;
-            btnOK.FlatStyle = FlatStyle.Flat;
-            btnOK.FlatAppearance.BorderSize = 0;
-            btnOK.Bounds = new Rectangle((this.ClientSize.Width - Utils.UIConstants.StandardButtonWidth) / 2, buttonY, Utils.UIConstants.StandardButtonWidth, Utils.UIConstants.ButtonHeight);
-            btnOK.Cursor = Cursors.Hand;
-            this.Controls.Add(btnOK);
-        }
-
-        private void BtnOK_Click(object sender, EventArgs e)
-        {
-            this.Close();
-        }
+        private RoundedPanel pnlCard;
 
         private Label lblTitle;
-        private Label lblAccountInfo;
+        private Label lblAccountLabel;
+        private Label lblAccountNumber;
+        private Label lblBalanceLabel;
         private Label lblBalance;
         private Button btnOK;
 
-        private void InitializeComponent()
+        public BalanceForm(Services.ATMService service)
         {
-            pnlHeader = new Panel();
-            lblTitle = new Label();
-            lblAccountInfo = new Label();
-            lblBalance = new Label();
-            btnOK = new Button();
+            atmService = service;
 
-            SuspendLayout();
+            if (atmService == null || atmService.GetCurrentUser() == null)
+            {
+                MessageBox.Show(
+                    "No user is logged in.\nPlease login again.",
+                    "Session Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+                Close();
+                return;
+            }
 
-            this.AutoScaleDimensions = new SizeF(7F, 15F);
-            this.AutoScaleMode = AutoScaleMode.Font;
-            this.ClientSize = new Size(Utils.UIConstants.BalanceFormWidth, Utils.UIConstants.BalanceFormHeight);
-            this.Name = "BalanceForm";
-            this.Text = "ATM - Balance";
-            this.Load += BalanceForm_Load;
+            BuildUI();
 
-            this.Controls.Add(pnlHeader);
-            this.Controls.Add(lblTitle);
-            this.Controls.Add(lblAccountInfo);
-            this.Controls.Add(lblBalance);
-            this.Controls.Add(btnOK);
+            Shown += (s, e) => RefreshBalance();
+        }
 
-            btnOK.Click += BtnOK_Click;
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+            RefreshBalance();
+        }
 
-            ResumeLayout(false);
-            PerformLayout();
+        private void BuildUI()
+        {
+            Text = "ATM - Check Balance";
+            ClientSize = new Size(920, 520);
+            StartPosition = FormStartPosition.CenterScreen;
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            MaximizeBox = false;
+            DoubleBuffered = true;
+
+            Controls.Clear();
+
+            // ================= BACKGROUND =================
+            PictureBox bg = new PictureBox
+            {
+                Dock = DockStyle.Fill,
+                Image = Properties.Resources.BG_Image,
+                SizeMode = PictureBoxSizeMode.StretchImage
+            };
+            Controls.Add(bg);
+            bg.SendToBack();
+
+            // ================= HEADER =================
+            pnlHeader = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 90,
+                BackColor = Color.FromArgb(0, 90, 160)
+            };
+
+            lblTitle = new Label
+            {
+                Text = "ACCOUNT BALANCE",
+                Dock = DockStyle.Fill,
+                Font = new Font("Segoe UI Semibold", 24),
+                ForeColor = Color.White,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+
+            pnlHeader.Controls.Add(lblTitle);
+            Controls.Add(pnlHeader);
+
+            // ================= CARD =================
+            pnlCard = new RoundedPanel
+            {
+                Size = new Size(420, 300),
+                Location = new Point((ClientSize.Width - 420) / 2, 140),
+                BackColor = Color.White,
+                Radius = 22
+            };
+            Controls.Add(pnlCard);
+
+            pnlHeader.BringToFront();
+            pnlCard.BringToFront();
+
+            int left = 30;
+            int width = 360;
+
+            lblAccountLabel = new Label
+            {
+                Text = "ACCOUNT NUMBER",
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                ForeColor = Color.Gray,
+                Top = 30,
+                Left = left,
+                Width = width,
+                Height = 26,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+
+            lblAccountNumber = new Label
+            {
+                Font = new Font("Segoe UI", 16, FontStyle.Bold),
+                ForeColor = Color.FromArgb(0, 90, 160),
+                Top = lblAccountLabel.Bottom + 6,
+                Left = left,
+                Width = width,
+                Height = 32,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+
+            lblBalanceLabel = new Label
+            {
+                Text = "AVAILABLE BALANCE",
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Color.Gray,
+                Top = lblAccountNumber.Bottom + 18,
+                Left = left,
+                Width = width,
+                Height = 28,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+
+            lblBalance = new Label
+            {
+                Font = new Font("Segoe UI", 32, FontStyle.Bold),
+                ForeColor = Color.FromArgb(46, 204, 113),
+                Top = lblBalanceLabel.Bottom + 10,
+                Left = left,
+                Width = width,
+                Height = 90,
+                TextAlign = ContentAlignment.MiddleCenter,
+                AutoSize = false,
+                Text = "$ 0.00"
+            };
+
+            btnOK = new Button
+            {
+                Text = "OK",
+                Width = 160,
+                Height = 44,
+                Top = 230,
+                Left = (pnlCard.Width - 160) / 2,
+                BackColor = Color.FromArgb(0, 90, 160),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI Semibold", 11)
+            };
+
+            btnOK.FlatAppearance.BorderSize = 0;
+            btnOK.Click += (s, e) => Close();
+
+            pnlCard.Controls.AddRange(new Control[]
+            {
+                lblAccountLabel,
+                lblAccountNumber,
+                lblBalanceLabel,
+                lblBalance,
+                btnOK
+            });
+
+            lblBalance.BringToFront();
+        }
+
+        private void RefreshBalance()
+        {
+            var user = atmService.GetCurrentUser();
+
+            if (user == null)
+            {
+                lblAccountNumber.Text = "N/A";
+                lblBalance.Text = "$ 0.00";
+                return;
+            }
+
+            lblAccountNumber.Text = user.AccountNumber;
+            lblBalance.Text = user.Balance.ToString("C2");
         }
     }
 }
