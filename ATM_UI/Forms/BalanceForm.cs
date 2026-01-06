@@ -130,7 +130,7 @@ namespace ATM_UI.Forms
                 Text = "AVAILABLE BALANCE",
                 Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 ForeColor = Color.Gray,
-                Top = lblAccountNumber.Bottom + 18,
+                Top = lblAccountNumber.Bottom + 16,
                 Left = left,
                 Width = width,
                 Height = 28,
@@ -154,7 +154,7 @@ namespace ATM_UI.Forms
             {
                 Text = "OK",
                 Width = 160,
-                Height = 44,
+                Height = 60,
                 Top = 230,
                 Left = (pnlCard.Width - 160) / 2,
                 BackColor = Color.FromArgb(0, 90, 160),

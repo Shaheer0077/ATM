@@ -131,8 +131,8 @@ namespace ATM_UI.Forms
             pnlDeposit.Controls.Add(lblMessage);
 
             // ================= BUTTONS =================
-            btnDeposit = CreateButton("DEPOSIT", 260, Color.FromArgb(46, 204, 113));
-            btnCancel = CreateButton("CANCEL", 260, Color.FromArgb(231, 76, 60));
+            btnDeposit = CreateButton("DEPOSIT", 260, Color.FromArgb(52, 152, 219));
+            btnCancel = CreateButton("GO BACK", 260, Color.FromArgb(52, 152, 219));
             btnCancel.Left = 200;
 
             btnDeposit.Click += BtnDeposit_Click;

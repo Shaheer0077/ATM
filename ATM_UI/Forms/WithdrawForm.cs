@@ -131,8 +131,8 @@ namespace ATM_UI.Forms
             pnlWithdraw.Controls.Add(lblMessage);
 
             // ================= BUTTONS =================
-            btnWithdraw = CreateButton("WITHDRAW", 260, Color.FromArgb(46, 204, 113));
-            btnCancel = CreateButton("CANCEL", 260, Color.FromArgb(231, 76, 60));
+            btnWithdraw = CreateButton("WITHDRAW", 260, Color.FromArgb(52, 152, 219));
+            btnCancel = CreateButton("PREVIOUS", 260, Color.FromArgb(52, 152, 219));
             btnCancel.Left = 200;
 
             btnWithdraw.Click += BtnWithdraw_Click;
