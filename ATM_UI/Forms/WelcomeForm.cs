@@ -65,7 +65,7 @@ namespace ATM_UI.Forms
             Panel welcomeBg = new Panel
             {
                 Dock = DockStyle.Top,
-                BackColor = Color.FromArgb(200, 10, 30, 80),
+                //BackColor = Color.FromArgb(200, 10, 30, 80),
                 Padding = new Padding(10),
                 AutoSize = true
             };
