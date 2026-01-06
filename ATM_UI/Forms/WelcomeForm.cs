@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
 using System.Windows.Forms;
 
 namespace ATM_UI.Forms
 {
     public partial class WelcomeForm : Form
     {
-        private Panel pnlContent;
-
         public WelcomeForm()
         {
             InitializeComponent();
@@ -18,9 +15,8 @@ namespace ATM_UI.Forms
 
         private void BuildUI()
         {
-            this.AutoScaleMode = AutoScaleMode.None;
+            AutoScaleMode = AutoScaleMode.None;
 
-            // ========= FORM =========
             Text = "ATM System";
             ClientSize = new Size(900, 500);
             FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -28,7 +24,6 @@ namespace ATM_UI.Forms
             StartPosition = FormStartPosition.CenterScreen;
             DoubleBuffered = true;
 
-            // ========= BACKGROUND IMAGE =========
             PictureBox bg = new PictureBox
             {
                 Dock = DockStyle.Fill,
@@ -37,18 +32,14 @@ namespace ATM_UI.Forms
             };
             Controls.Add(bg);
 
-
-            // ========= LEFT CONTENT PANEL =========
             Panel leftPanel = new Panel
             {
                 Width = 420,
                 Dock = DockStyle.Left,
-                BackColor = Color.FromArgb(200, 10, 30, 80) // deep glass blue
+                BackColor = Color.Transparent
             };
             bg.Controls.Add(leftPanel);
 
-
-            // ========= INNER WRAPPER (FOR SPACING) =========
             Panel inner = new Panel
             {
                 Dock = DockStyle.Fill,
@@ -56,46 +47,41 @@ namespace ATM_UI.Forms
             };
             leftPanel.Controls.Add(inner);
 
-
-            // ========= LAYOUT =========
             TableLayoutPanel layout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 RowCount = 4,
-                ColumnCount = 1
+                ColumnCount = 1,
+                AutoSize = true
             };
 
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 95));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 55));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 160));
-            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Welcome
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 180)); // Card
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Instruction
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // Button
 
             inner.Controls.Add(layout);
 
+            Panel welcomeBg = new Panel
+            {
+                Dock = DockStyle.Top,
+                BackColor = Color.FromArgb(200, 10, 30, 80),
+                Padding = new Padding(10),
+                AutoSize = true
+            };
 
-            // ========= TITLE =========
             Label lblWelcome = new Label
             {
                 Text = "WELCOME TO ATM",
-                Font = new Font("Segoe UI", 28, FontStyle.Bold),
+                Font = new Font("Segoe UI", 22, FontStyle.Bold),
                 ForeColor = Color.White,
-                Dock = DockStyle.Fill,
+                AutoSize = true,
+                Dock = DockStyle.Top,
                 TextAlign = ContentAlignment.MiddleCenter
             };
 
+            welcomeBg.Controls.Add(lblWelcome);
 
-            // ========= SUB TEXT =========
-            Label lblInstruction = new Label
-            {
-                Text = "Please insert your card to continue",
-                Font = new Font("Segoe UI", 13, FontStyle.Regular),
-                ForeColor = Color.FromArgb(235, 235, 235),
-                Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleCenter
-            };
-
-
-            // ========= CARD IMAGE =========
             PictureBox card = new PictureBox
             {
                 Image = RotateImage(Properties.Resources.ATM_CARD, 90),
@@ -104,12 +90,21 @@ namespace ATM_UI.Forms
                 BackColor = Color.Transparent
             };
 
+            Label lblInstruction = new Label
+            {
+                Text = "Please insert your card to continue",
+                Font = new Font("Segoe UI", 13, FontStyle.Bold),
+                BackColor = Color.FromArgb(200, 10, 30, 80),
+                ForeColor = Color.White,
+                AutoSize = true,
+                Dock = DockStyle.Top,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
 
-            // ========= BUTTON =========
             Button btnInsert = new Button
             {
                 Text = "INSERT CARD",
-                Dock = DockStyle.Top,
+                Width = 220,
                 Height = 52,
                 BackColor = Color.FromArgb(0, 130, 255),
                 ForeColor = Color.White,
@@ -122,15 +117,19 @@ namespace ATM_UI.Forms
             btnInsert.Cursor = Cursors.Hand;
             btnInsert.Click += BtnInsert_Click;
 
+            Panel btnWrapper = new Panel { Dock = DockStyle.Fill };
+            btnWrapper.Controls.Add(btnInsert);
+            btnWrapper.Resize += (s, e) =>
+            {
+                btnInsert.Left = (btnWrapper.Width - btnInsert.Width) / 2;
+                btnInsert.Top = 10;
+            };
 
-            // ========= ADD CONTROLS =========
-            layout.Controls.Add(lblWelcome, 0, 0);
-            layout.Controls.Add(lblInstruction, 0, 1);
-            layout.Controls.Add(card, 0, 2);
-            layout.Controls.Add(btnInsert, 0, 3);
+            layout.Controls.Add(welcomeBg, 0, 0);
+            layout.Controls.Add(card, 0, 1);
+            layout.Controls.Add(lblInstruction, 0, 2);
+            layout.Controls.Add(btnWrapper, 0, 3);
         }
-
-
 
         private Image RotateImage(Image img, float angle)
         {
@@ -157,9 +156,6 @@ namespace ATM_UI.Forms
             Close();
         }
 
-        private void InitializeComponent()
-        {
-            // intentionally empty
-        }
+        private void InitializeComponent() { }
     }
 }
