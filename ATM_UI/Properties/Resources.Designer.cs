@@ -63,9 +63,29 @@ namespace ATM_UI.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap ATM_CARD {
+            get {
+                object obj = ResourceManager.GetObject("ATM CARD", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap BG_Image {
             get {
                 object obj = ResourceManager.GetObject("BG Image", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Home_Image {
+            get {
+                object obj = ResourceManager.GetObject("Home Image", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
